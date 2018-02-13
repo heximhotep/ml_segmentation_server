@@ -5,6 +5,8 @@ for(var i = 0; i < numDogs; i++)
   if(i == 6) continue; //missing dog6.png lmoa
   imgURLs.push("images/dog" + i + ".png");
 }
+var isFinished = false;
+
 var usedImgs = [];
 var currentCount = 0;
 var countRequirement = 5;
@@ -127,6 +129,7 @@ function setup()
 
 function sendImg()
 {
+	var saveName = curURL.split(".")[0];
   var mapData = {width:curMap.width, height:curMap.height, urlIndex:curURL};
   curMap.loadPixels();
   var pixelEncoding = "";
@@ -169,6 +172,7 @@ function trueFinish()
 {
   //print out victory message
   //give validation code to turkers
+	isFinished = true;
 }
 
 function errorFn(error)
@@ -178,10 +182,20 @@ function errorFn(error)
 
 function draw()
 {
-  background(0);
-  image(curImg, 0, 0);
-  blendMode(SCREEN);
-  image(curMap, 0, 0);
-  blendMode(NORMAL);
-  drawBrushPreview();
+	if(!isFinished)
+	{
+  	background(0);
+  	image(curImg, 0, 0);
+  	blendMode(SCREEN);
+  	image(curMap, 0, 0);
+  	blendMode(NORMAL);
+  	drawBrushPreview();
+	}
+	else
+	{
+		background(255);
+		fill(0);
+		textSize(64);
+		text("congratulations! You win");
+	}
 }
