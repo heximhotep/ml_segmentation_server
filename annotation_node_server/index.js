@@ -11,8 +11,7 @@ var allowCrossDomain = function(req, res, next) {
 };
 app.use(allowCrossDomain);
 var bodyParser = require('body-parser');
-
-var numImages = 25;
+const numImages = 25;
 
 var urlIndices = [];
 
@@ -29,7 +28,15 @@ function send_message(req, res)
 {
 	console.log('received message\n');
     var indexIndices = req.body.urlIndex;
-    var thisIndex = urlIndices[indexIndices];
+    var thisIndex = 0;
+    if(urlIndices[indexIndices] != undefined)
+    {
+        thisIndex = urlIndices[indexIndices];
+    }
+    else
+    {
+        urlIndices[indexIndices] = 0;
+    }
     urlIndices[indexIndices] += 1;
     var fileBody = "";
     fileBody += req.body.width + " ";
@@ -43,8 +50,6 @@ function send_message(req, res)
     response = {body:"ok dude"};
     res.end(JSON.stringify(response));
 }
-
-
 
 app.post('/send_message', send_message);
 //app.options('/send_message', send_message);

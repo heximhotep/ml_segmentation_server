@@ -2,10 +2,9 @@ const numDogs = 25;
 var imgURLs = [];
 for(var i = 0; i < numDogs; i++)
 {
-  if(i == 6) continue; //missing dog6.png lmoa
   imgURLs.push("images/dog" + i + ".png");
 }
-var isFinished = false;
+var isFinished;
 
 var usedImgs = [];
 var currentCount = 0;
@@ -30,8 +29,10 @@ var maxBrushSize = 25;
 var minBrushSize = 0.5;
 var brushChangeRate = 2;
 
-var curColor = color(255, 0, 0);
+var curColor;
 var curURL;
+
+var finalKey;
 
 function loadReferenceImgs()
 {
@@ -85,24 +86,28 @@ function keyPressed()
 
 function brushstroke()
 {
-  curMap.ellipse(mouseX / 2, mouseY / 2, brushSize, brushSize);
+  curMap.ellipse(mouseX, mouseY, brushSize, brushSize);
 }
 
 function drawBrushPreview()
 {
   BrushPreview.clear();
-  BrushPreview.ellipse(mouseX / 2, mouseY / 2, brushSize, brushSize);
+  BrushPreview.ellipse(mouseX, mouseY, brushSize, brushSize);
   image(BrushPreview, 0, 0);
 }
 
 function setup()
 {
   noCursor();
+  pixelDensity(1);
+  isFinished = false;
   brushSize = 15;
   curColor = color(255, 0, 0);
-  myCanvas = createCanvas(screenRes[0], screenRes[1]);
+  myCanvas = createCanvas(screenRes[0] + 400, screenRes[1]);
   curMap = createGraphics(screenRes[0], screenRes[1]);
   curMap.noStroke();
+  curMap.pixelDensity(1);
+  curMap.fill(curColor);
   BrushPreview = createGraphics(screenRes[0], screenRes[1]);
   BrushPreview.noFill();
   BrushPreview.stroke(color(255));
@@ -129,8 +134,10 @@ function setup()
 
 function sendImg()
 {
-	var saveName = curURL.split(".")[0];
-  var mapData = {width:curMap.width, height:curMap.height, urlIndex:curURL};
+  if(isFinished) 
+  	return;
+  var imgName = (curURL.split("/")[1]).split(".")[0];
+  var mapData = {width:curMap.width, height:curMap.height, urlIndex:imgName};
   curMap.loadPixels();
   var pixelEncoding = "";
   for(var i = 0; i < mapData.height; i++)
@@ -138,8 +145,9 @@ function sendImg()
     for(var j = 0; j < mapData.width; j++)
     {
       var idx = i * mapData.width + j;
-      var thisCol = curMap.pixels[idx];
-      pixelEncoding += " " + str(red(thisCol)) + " " + str(blue(thisCol))
+      var thisRed = curMap.pixels[idx * 4];
+      var thisBlu = curMap.pixels[idx * 4 + 2];
+      pixelEncoding += " " + str(thisRed) + " " + str(thisBlu);
     }
   }
   mapData.enc = pixelEncoding;
@@ -156,7 +164,7 @@ function sendImg()
 
 function finishFn(result)
 {
-  if(currentCount >= countRequirement)
+  if(currentCount >= countRequirement - 1)
   {
     trueFinish();
   }
@@ -165,14 +173,14 @@ function finishFn(result)
     currentCount++;
     curMap.clear();
     curImg = referenceImgs[currentCount];
+    curURL = usedImgs[currentCount];
   }
 }
 
 function trueFinish()
 {
-  //print out victory message
-  //give validation code to turkers
-	isFinished = true;
+  isFinished = true;
+  finalKey = makeid();
 }
 
 function errorFn(error)
@@ -180,22 +188,48 @@ function errorFn(error)
 
 }
 
+function makeid() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 8; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
+function drawInstructions()
+{
+	var baseX = screenRes[0] + 5;
+	textSize(18);
+	fill(255);
+	var baseY = 25;
+	var lineOffset = 24;
+	text("r: change color to red", baseX, baseY);
+	text("t: change color to blue", baseX, baseY + lineOffset);
+	text("e: change color to erase", baseX, baseY + lineOffset * 2);
+	text("z: make brush smaller", baseX, baseY + lineOffset * 3);
+	text("x: make brush bigger", baseX, baseY + lineOffset * 4);
+}
+
 function draw()
 {
-	if(!isFinished)
-	{
+  if(!isFinished)
+  {
   	background(0);
-  	image(curImg, 0, 0);
-  	blendMode(SCREEN);
-  	image(curMap, 0, 0);
-  	blendMode(NORMAL);
-  	drawBrushPreview();
-	}
-	else
-	{
-		background(255);
-		fill(0);
-		textSize(64);
-		text("congratulations! You win");
-	}
+  	var imgW = Math.min(screenRes[0], curImg.width);
+  	var imgH = Math.min(screenRes[1], curImg.height);
+    image(curImg, 0, 0, imgW, imgH, 0, 0, imgW, imgH);
+    blendMode(SCREEN);
+    image(curMap, 0, 0);
+    blendMode(NORMAL);
+    drawBrushPreview();
+  }
+  else
+  {
+  	background(0);
+  	textSize(24);
+  	text("congratulations! Your key is " + finalKey, 10, screenRes[1] / 2);
+  }
+  drawInstructions();
 }
