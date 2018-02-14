@@ -2,13 +2,25 @@ var express = require('express');
 var fs = require('fs');
 var cors = require('cors');
 var app = express();
-//app.use(cors());
+const keyLogPath = "generated_keys.santorum"
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', "*");
     res.header('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE");
     res.header('Access-Control-Allow-Headers', "Origin, X-Requested-With, Content-Type, Accept");
     next();
 };
+
+function makeid() 
+{
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 8; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
 app.use(allowCrossDomain);
 var bodyParser = require('body-parser');
 const numImages = 25;
@@ -51,8 +63,18 @@ function send_message(req, res)
     res.end(JSON.stringify(response));
 }
 
+function get_key(req, res)
+{
+    console.log('received key request\n');
+    var nuKey = makeid();
+    fs.appendFileSync(keyLogPath, nuKey + '\n');
+    res.end(nuKey);
+}
+
 app.post('/send_message', send_message);
-//app.options('/send_message', send_message);
+
+app.post('/get_key', get_key);
+
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
