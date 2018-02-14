@@ -1,4 +1,8 @@
 const numDogs = 25;
+
+const sendMessagePath = "172.31.25.181/send_message";
+const getKeyPath = "172.31.25.181/get_key";
+
 var imgURLs = [];
 for(var i = 0; i < numDogs; i++)
 {
@@ -32,7 +36,7 @@ var brushChangeRate = 2;
 var curColor;
 var curURL;
 
-var finalKey;
+var finalKey = "";
 
 function loadReferenceImgs()
 {
@@ -104,21 +108,24 @@ function setup()
   brushSize = 15;
   curColor = color(255, 0, 0);
   myCanvas = createCanvas(screenRes[0] + 400, screenRes[1]);
+
   curMap = createGraphics(screenRes[0], screenRes[1]);
   curMap.noStroke();
   curMap.pixelDensity(1);
   curMap.fill(curColor);
+
   BrushPreview = createGraphics(screenRes[0], screenRes[1]);
   BrushPreview.noFill();
   BrushPreview.stroke(color(255));
   BrushPreview.strokeWeight(0.5);
+
   resetButton = createButton('Reset');
   resetButton.position(0, screenRes[1] + 5);
   resetButton.size(65, 19);
+
   acceptButton = createButton('Accept');
   acceptButton.position(75, screenRes[1] + 5);
   acceptButton.size(65, 19);
-
 
   resetButton.mousePressed(
     function()
@@ -151,10 +158,9 @@ function sendImg()
     }
   }
   mapData.enc = pixelEncoding;
-  var sendPath = "http://127.0.0.1:42069/send_message";
   var dataType = "json";
   httpPost(
-    sendPath,
+    sendMessagePath,
     dataType,
     mapData,
     finishFn,
@@ -180,23 +186,23 @@ function finishFn(result)
 function trueFinish()
 {
   isFinished = true;
-  finalKey = makeid();
+  httpPost(
+  	getKeyPath,
+  	'text',
+  	'userID',
+  	function(result)
+  	{
+  		finalKey = result;
+  	},
+  	errorFn
+  );
 }
 
 function errorFn(error)
 {
-
+  console.log("error: " + error);
 }
 
-function makeid() {
-  var text = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-  for (var i = 0; i < 8; i++)
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-  return text;
-}
 
 function drawInstructions()
 {
